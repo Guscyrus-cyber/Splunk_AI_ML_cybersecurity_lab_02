@@ -14,45 +14,30 @@ Using Splunk Enterprise, I ingested the dataset, analyzed network activity, iden
 
 **Dataset:**
 
-network_exfil_dataset.csv
+File name: network_exfil_dataset.csv
 
-\
-\
-\
-\
-\
-\
-\
-\
-\
-**Uploading file into Splunk enterprise**\
-\
-\
-\
-**Verification\
-\**
-\
-\
-\
-\
-\
-\
+Please refer to screenshot images # 1, 2, and 3
+
+
+**Uploading file into Splunk enterprise**
+
+Please refer to screenshot image # 4
+
+**Verification**
+
+Please refer to image # 5
+
 Splunk successfully indexed 100 Data Exfiltration Anomaly Detection events from network_exfil_dataset.csv
 
-the dataset through using the query “ source="network_exfil_dataset.csv" host="MacBookPro" index="network" sourcetype="network_exfil" The screenshot displays the first five events as a sample to verify successful ingestion of 100 events of Data Exfiltration Anomaly Detection file.\
-\
-\
-\
+the dataset through using the query “ source="network_exfil_dataset.csv" host="MacBookPro" index="network" sourcetype="network_exfil" The screenshot displays the first five events as a sample to verify successful ingestion of 100 events of Data Exfiltration Anomaly Detection file.
+
 **1.** What network traffic events are present in the data exfiltration dataset?\
 \
 using this query:\
 index=network sourcetype=network_exfil\
-\| table user host src_ip dest_ip country bytes_sent protocol label\
-\
-\
-\
-\
-\
+\| table user host src_ip dest_ip country bytes_sent protocol label
+
+Please refer to screenshot images # 6 and 7
 
 I displayed the network traffic dataset fields to verify successful ingestion and review the available information for each event. The output includes the user, host, source IP address, destination IP address, destination country, number of bytes transferred, network protocol, and classification label.
 
@@ -74,9 +59,10 @@ These fields provide the information necessary to investigate potential data exf
 Using this query:\
 index=network sourcetype=network_exfil\
 \| stats sum(bytes_sent) as total_bytes by host\
-\| sort - total_bytes\
-\
-\
+\| sort - total_bytes
+
+Please refer to image # 8
+
 I calculated the total volume of data transferred by each host and sorted the results in descending order. This analysis helps identify systems responsible for large amounts of network traffic, which may indicate data exfiltration, backups, file transfers, or other significant network activity.
 
 The host that transferred the most data was **MacBookPro**, with a total of 162,971,464 bytes transferred across all network events in the dataset. I identified MacBookPro as the host responsible for the highest volume of network traffic. However, this result alone does not confirm data exfiltration because MacBookPro is currently the only host represented in the dataset output. Additional analysis is required to determine whether the transferred data volume is normal or anomalous compared to other hosts, users, destinations, or countries.
@@ -92,11 +78,12 @@ Additional analysis is required before classifying the activity as anomalous. A 
 
 Using this quesry:
 
-index=network sourcetype=network_exfil\
-\| stats sum(bytes_sent) as total_bytes by user\
+index=network sourcetype=network_exfil
+\| stats sum(bytes_sent) as total_bytes by user
 \| sort - total_bytes
 
-\
+Please refer to image # 9
+
 I calculated the total amount of data transferred by each user and sorted the results from highest to lowest. This analysis helps identify users whose network activity significantly exceeds that of other users and may indicate abnormal behavior or potential data exfiltration.
 
 The users who transferred the most data were:
@@ -114,10 +101,9 @@ Large backup operations\
 Administrative file transfers\
 Unauthorized movement of sensitive information
 
-Additional investigation is required to determine whether this activity is legitimate or malicious.\
-\
-AI/ML Insight
-----------------------------------------------------------------------------------------------------
+Additional investigation is required to determine whether this activity is legitimate or malicious.
+
+**AI/ML Insight**
 
 This is the first place where we can reasonably start talking about anomalies.
 
@@ -137,15 +123,14 @@ That doesn't prove malicious activity, but from an anomaly-detection perspective
 
 **finance_admin and backup_admin are strong candidate outliers.**
 
-**\**
-\
-4. **Which countries received the most data?\
+**4.** Which countries received the most data?\
 Using this query:\
 index=network sourcetype=network_exfil\
 \| stats sum(bytes_sent) as total_bytes by country\
 \| sort - total_bytes\
-\**
-\**
+
+Please refer to image # 10
+
 calculated the total amount of data transferred to each destination country and sorted the results in descending order. This analysis helps identify geographic destinations receiving unusually large amounts of data and can reveal potential exfiltration targets.
 
 The countries that received the most data were:
@@ -166,7 +151,7 @@ These destinations are associated with the anomaly records in the dataset.
 
 These countries should be prioritized for further investigation when looking for potential data exfiltration activity.
 
-## AI/ML Insight
+**AI/ML Insight**
 
 This is our first strong anomaly.
 
@@ -192,10 +177,8 @@ index=network sourcetype=network_exfil\
 \| sort - bytes_sent\
 \| table user host country bytes_sent protocol label
 
-\
-\
-\
-\
+Please refer to image # 11 and 12
+
 I sorted all network events by the bytes_sent field in descending order to identify the largest individual data transfers. Large outbound transfers are important because they may indicate data exfiltration, unauthorized backups, bulk file movement, or other suspicious activity.
 
 The largest individual data transfers were:
@@ -229,7 +212,7 @@ which is approximately **47 times larger**.
 
 This difference strongly suggests abnormal behavior and makes these events prime candidates for a data exfiltration investigation.
 
-## AI/ML Insight
+**AI/ML Insight**
 
 This is where anomaly detection becomes obvious.
 
@@ -262,20 +245,8 @@ Using this query:
 index=network sourcetype=network_exfil label=Anomaly\
 \| stats count by user\
 \| sort – count\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Please refer to image # 13
 
 I filtered the dataset to include only events labeled **Anomaly** and counted the number of anomaly events associated with each user. This helps identify users responsible for the majority of suspicious network activity.The users responsible for the anomaly events were:
 
@@ -291,27 +262,27 @@ These same users generated the largest individual network transfers.
 
 The repeated appearance of these users across multiple investigations increases confidence that they represent the primary anomaly sources in the dataset.
 
-## AI/ML Insight
+**AI/ML Insight**
 
 This is where multiple indicators begin to correlate. Earlier we found:
 
-### **High Data Volume**
+**High Data Volume**
 
 finance_admin\
 backup_admin
 
-### **Suspicious Destinations**
+**Suspicious Destinations**
 
 Unknown\
 Russia\
 China
 
-### **Largest Individual Transfers**
+**Largest Individual Transfers**
 
 finance_admin\
 backup_admin
 
-### Most Anomaly Events
+**Most Anomaly Events**
 
 finance_admin\
 backup_admin
@@ -328,9 +299,9 @@ index=network sourcetype=network_exfil label=Anomaly\
 
 This helps determine how the data may have been transferred (HTTPS, SFTP, etc.) and is a common step in exfiltration investigations.
 
-\
+Please refer to image # 14
+
 I filtered the dataset to include only events labeled as Anomaly and counted the number of events associated with each network protocol. Understanding which protocols are used helps determine how data may have been transferred outside the organization.
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 The anomaly events used:
 
@@ -369,21 +340,16 @@ HTTPS\
 + finance_admin\
 becomes highly suspicious.
 
-**\
-\
-\
-\
-8. How many events were classified as Normal and how many were classified as Anomaly?**
+**8.** How many events were classified as Normal and how many were classified as Anomaly?
 
-Using this query:**\
-\**
+Using this query:
+
 index=network sourcetype=network_exfil\
 \| stats count by label
 
-\
-\
+Please refer to image # 15
+
 I counted the number of events associated with each classification label in the dataset. This provides a baseline understanding of the distribution of normal and anomalous network activity before performing further investigations.The dataset contains:
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 **90 Normal events**\
 **10 Anomaly events**\
@@ -399,7 +365,7 @@ Security analysts must identify a small number of anomalies hidden within a much
 
 The anomaly records represent the highest-risk activity in the dataset and should be prioritized for investigation.
 
-## AI/ML Insight
+**AI/ML Insight**
 
 This is exactly how anomaly detection datasets often look:
 
@@ -414,8 +380,8 @@ and then identifies:
 
 What deviates from normal?
 
-### \
-In this lab:\
+
+In this lab:
 \
 **Normal Population**
 
@@ -426,7 +392,7 @@ Lower data volumes\
 Regular users\
 Typical network activity
 
-### **Anomalous Population**
+**Anomalous Population**
 
 finance_admin\
 backup_admin\
@@ -447,8 +413,8 @@ index=network sourcetype=network_exfil label=Anomaly\
 \| stats sum(bytes_sent) as total_bytes by user country\
 \| sort - total_bytes
 
-\
-\
+Please refer to image # 16
+
 I analyzed only the anomaly events and calculated the total amount of data transferred for each user-country combination. This helps identify which users were responsible for the largest suspicious transfers and where the data was sent. The largest anomalous transfers were:
 
 **finance_admin → Unknown** — 37,725,850 bytes\
@@ -470,7 +436,7 @@ Based on the available evidence, **finance_admin** represents the highest-risk e
 
 In this lab, I investigated 100 network traffic events using Splunk Enterprise to identify potential data exfiltration activity through anomaly detection techniques. I analyzed user behavior, destination countries, transfer volumes, protocols, and anomaly classifications to determine which entities posed the greatest risk.
 
-### **Key Findings**
+**Key Findings**
 
 - 100 total network events analyzed.
 
@@ -490,7 +456,7 @@ In this lab, I investigated 100 network traffic events using Splunk Enterprise t
 
 - Highest-risk user: finance_admin.
 
-### **AI/ML Concepts Anomaly Detection** 
+**AI/ML Concepts Anomaly Detection** 
 
 Unsupervised Learning\
 Outlier Analysis\
